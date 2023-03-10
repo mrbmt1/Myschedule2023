@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "432303157141",
+    "firebase_url": "https://myschedule-3a44a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "myschedule-3a44a",
+    "storage_bucket": "myschedule-3a44a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432303157141:android:236d1379046b1ca22e109c",
+        "android_client_info": {
+          "package_name": "com.example.myshedule"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "432303157141-pr6e9cr096qh6n5dmvii4kf6vcrb0qh0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5OXFRsnMjlbtcEdZmRRvlOhxaR6AS5Us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "432303157141-pr6e9cr096qh6n5dmvii4kf6vcrb0qh0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "432303157141-2eap916gbmjugep6hhjo5qs85n5bcmo8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myshedule"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
