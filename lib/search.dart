@@ -22,7 +22,14 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _searchStream = FirebaseFirestore.instance.collection('tasks').snapshots();
+    DateTime today = DateTime.now();
+    DateTime startDate = DateTime(today.year, today.month, today.day);
+    DateTime endDate = startDate.add(Duration(days: 1));
+    _searchStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('dueDate', isLessThan: Timestamp.fromDate(endDate))
+        .snapshots();
     _getFilterDates();
   }
 
@@ -32,8 +39,27 @@ class _SearchScreenState extends State<SearchScreen> {
     List<DateTime> allDates = snapshot.docs
         .map((doc) => (doc['dueDate'] as Timestamp).toDate())
         .toList();
-    allDates.sort(); // Sắp xếp danh sách thời gian tăng dần
-    _filterDateList = allDates.toSet().toList();
+    allDates.sort(); // Sort the list of dates in ascending order
+
+    // Group dates with the same date into one date
+    Map<String, DateTime> groupedDates = {};
+    allDates.forEach((date) {
+      String dateKey = DateFormat('dd/MM/yyyy').format(date);
+      if (groupedDates.containsKey(dateKey)) {
+        // If a date with this key already exists, update its time to the latest time
+        DateTime existingDate = groupedDates[dateKey]!;
+        if (date.isAfter(existingDate)) {
+          groupedDates[dateKey] = date;
+        }
+      } else {
+        // If a date with this key doesn't exist, add it to the map
+        groupedDates[dateKey] = date;
+      }
+    });
+
+    // Create a list of unique dates from the map
+    _filterDateList = groupedDates.values.toList();
+
     _filterButtonList = _filterDateList.map<Widget>((date) {
       String dateText = DateFormat('dd/MM/yyyy').format(date);
       if (date.year == DateTime.now().year &&
@@ -44,6 +70,12 @@ class _SearchScreenState extends State<SearchScreen> {
           date.month == DateTime.now().add(Duration(days: 1)).month &&
           date.day == DateTime.now().add(Duration(days: 1)).day) {
         dateText += ' (ngày mai)';
+      } else if (date.year == DateTime.now().subtract(Duration(days: 1)).year &&
+          date.month == DateTime.now().subtract(Duration(days: 1)).month &&
+          date.day == DateTime.now().subtract(Duration(days: 1)).day) {
+        dateText += ' (hôm qua)';
+      } else {
+        dateText = DateFormat('dd/MM/yyyy').format(date);
       }
 
       return TextButton(
@@ -58,16 +90,19 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _filterTasks(DateTime date) {
+    DateTime startDate = DateTime(date.year, date.month, date.day);
+    DateTime endDate = startDate.add(Duration(days: 1));
     setState(() {
       _searchStream = FirebaseFirestore.instance
           .collection('tasks')
-          .where('dueDate', isEqualTo: Timestamp.fromDate(date))
+          .where('dueDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('dueDate', isLessThan: Timestamp.fromDate(endDate))
           .snapshots();
     });
-    Navigator.pop(context); // Ẩn cửa sổ chọn ngày
+    Navigator.pop(context);
 
-    _searchController.text = DateFormat('dd/MM/yyyy')
-        .format(date); // Đặt giá trị cho trường tìm kiếm là ngày đã chọn
+    _searchController.text = DateFormat('dd/MM/yyyy').format(date);
   }
 
   @override

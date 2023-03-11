@@ -33,7 +33,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 SizedBox(height: 20),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: InputDecoration(labelText: 'Tài khoản'),
+                  decoration: InputDecoration(
+                    labelText: 'Tài khoản',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
                       return 'Vui lòng nhập tài khoản';
@@ -44,7 +48,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 SizedBox(height: 10),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: InputDecoration(labelText: 'Số điện thoại'),
+                  decoration: InputDecoration(
+                    labelText: 'Số điện thoại',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone),
+                  ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
                       return 'Vui lòng nhập số điện thoại';
@@ -55,7 +63,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 SizedBox(height: 10),
                 TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email),
+                  ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
                       return 'Vui lòng nhập email';
@@ -67,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState?.validate() ?? false) {
-                      _submitForm();
+                      _resetPassword();
                     }
                   },
                   child: Text('Xác thực'),
@@ -85,52 +97,52 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  void _submitForm() async {
-    // Xác thực tài khoản, email và số điện thoại từ Firestore
-    final username = _usernameController.text.trim();
-    final phone = _phoneController.text.trim();
-    final email = _emailController.text.trim();
+  void _resetPassword() async {
+    try {
+      final String username = _usernameController.text.trim();
+      final String phone = _phoneController.text.trim();
+      final String email = _emailController.text.trim();
+      final QuerySnapshot result = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .where('phone', isEqualTo: phone)
+          .where('email', isEqualTo: email)
+          .get();
 
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(username)
-        .get();
-
-    print(username);
-    print(phone);
-    print(email);
-
-    if (!userDoc.exists) {
+      if (result.docs.length == 1) {
+        final Map<String, dynamic> data =
+            result.docs[0].data() as Map<String, dynamic>;
+        final String username = data['username'] as String;
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Xác thực thành công!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Navigate to SetNewPasswordscreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SetNewPassword(username: username),
+          ),
+        );
+      } else {
+        setState(() {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Thông tin tài khoản không chính xác!'),
+              backgroundColor: Color.fromARGB(255, 255, 0, 0),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        });
+      }
+    } catch (error) {
       setState(() {
-        _errorMessage = 'Tài khoản không tồn tại';
+        _errorMessage = error.toString();
       });
-      return;
     }
-
-    final userData = userDoc.data();
-    if (userData!['phone'].isEmpty ||
-        userData['email'].isEmpty ||
-        userData['phone'] != phone ||
-        userData['email'] != email) {
-      setState(() {
-        _errorMessage =
-            'Số điện thoại hoặc email không đúng hoặc có trường trống';
-      });
-      return;
-    }
-
-    // Thông báo xác thực thành công và chuyển đến màn hình SetNewPasswordScreen
-    setState(() {
-      _errorMessage = 'Xác thực thành công';
-    });
-
-    // Lưu UID hiện tại để chuyển vào màn hình đặt mật khẩu mới
-    final currentUid = FirebaseAuth.instance.currentUser!.uid;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SetNewPasswordScreen(uid: currentUid),
-      ),
-    );
   }
 }

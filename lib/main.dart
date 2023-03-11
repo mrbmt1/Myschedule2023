@@ -35,6 +35,8 @@ class _MainAppState extends State<MainApp> {
   final _passwordController = TextEditingController();
   User? _currentUser;
   bool rememberMe = false;
+  bool _obscureText = true;
+
   // late Locale _locale;
 
   Future<void> _saveLoginStatus(bool rememberMe) async {
@@ -194,7 +196,7 @@ class _MainAppState extends State<MainApp> {
                     SizedBox(height: 20),
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscureText,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Vui lòng nhập mật khẩu';
@@ -207,6 +209,19 @@ class _MainAppState extends State<MainApp> {
                         border: OutlineInputBorder(),
                         contentPadding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureText
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureText = !_obscureText;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(height: 0),

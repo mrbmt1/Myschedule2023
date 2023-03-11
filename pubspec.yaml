@@ -25,6 +25,13 @@ dependencies:
   flutter_sticky_header: ^0.6.5
   flutter_localizations:
     sdk: flutter
+  permission_handler: ^8.2.2
+  timezone: ^0.8.0
+  flutter_native_timezone: ^2.0.0
+  android_intent: ^2.0.0
+
+
+
 
 
  

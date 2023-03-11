@@ -16,27 +16,6 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // Divider(),
-          // ListTile(
-          //   leading: Icon(Icons.language),
-          //   title: Text('Ngôn ngữ'),
-          //   trailing: DropdownButton<String>(
-          //     value: 'Tiếng Việt',
-          //     onChanged: (String? newValue) {
-          //       SharedPreferences.getInstance().then((prefs) {
-          //         prefs.setString('selectedLanguage', newValue ?? 'vi');
-          //         AppLocalizations.of(context)!.load(Locale(newValue ?? 'vi'));
-          //       });
-          //     },
-          //     items: <String>['Tiếng Việt', 'English']
-          //         .map<DropdownMenuItem<String>>((String value) {
-          //       return DropdownMenuItem<String>(
-          //         value: value,
-          //         child: Text(value),
-          //       );
-          //     }).toList(),
-          //   ),
-          // ),
           Divider(),
           ListTile(
             leading: Icon(Icons.palette),

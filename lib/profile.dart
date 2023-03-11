@@ -30,6 +30,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  Future<void> _refreshUserData() async {
+    await _getUserData();
+  }
+
   void _verifyPassword(BuildContext context) async {
     String password = '';
     await showDialog(
@@ -79,6 +83,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Sai mật khẩu!'),
+                        backgroundColor: Colors.red,
                         duration: Duration(seconds: 2),
                       ),
                     );
@@ -105,49 +110,71 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tên tài khoản:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['username'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['username'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Tên tài khoản',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                   SizedBox(height: 16.0),
-                  Text('Họ và tên:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['fullName'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['fullName'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Họ và tên',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                   SizedBox(height: 16.0),
-                  Text('Giới tính:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['gender'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['gender'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Giới tính',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                   SizedBox(height: 16.0),
-                  Text('Ngày sinh:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['dob'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['dob'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Ngày sinh',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                   SizedBox(height: 16.0),
-                  Text('Email:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['email'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['email'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                   SizedBox(height: 16.0),
-                  Text('Số điện thoại:',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold)),
-                  Text('${_userData['phone'] ?? ''}',
-                      style: TextStyle(fontSize: 16.0)),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['phone'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Số điện thoại',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
                 ],
               ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _verifyPassword(context);
-          // Navigator.pushReplacement(
-          //     context, MaterialPageRoute(builder: (_) => EditProfileScreen()));
         },
         label: Text('Chỉnh sửa thông tin'),
         icon: Icon(Icons.edit),

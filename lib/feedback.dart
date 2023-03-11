@@ -25,8 +25,7 @@ class _FeedBackScreenState extends State<FeedBackScreen> {
             Text('Số điện thoại: 03x 46x 022x',
                 style: TextStyle(fontSize: 16.0)),
             SizedBox(height: 8.0),
-            Text(
-                'Địa chỉ: Văn phòng CTy TNHH VINATech, tòa nhà số 69, LandMark 81, VN',
+            Text('Địa chỉ: Vị Thủy, Hậu Giang',
                 style: TextStyle(fontSize: 16.0)),
           ],
         ),

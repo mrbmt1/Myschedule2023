@@ -112,6 +112,16 @@ class TodoItem {
     this.isNotification = false,
   }) : assert(id != null);
 
+  DateTime getDateTime() {
+    final now = DateTime.now();
+    final year = date?.year ?? now.year;
+    final month = date?.month ?? now.month;
+    final day = date?.day ?? now.day;
+    final hour = time?.hour ?? 0;
+    final minute = time?.minute ?? 0;
+    return DateTime(year, month, day, hour, minute);
+  }
+
   factory TodoItem.fromSnapshot(DocumentSnapshot snapshot) {
     var timeFromSnapshot = snapshot['timeOfDueDay'];
     TimeOfDay? time;

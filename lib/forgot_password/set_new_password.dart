@@ -1,91 +1,172 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:myshedule/main.dart';
 
-class SetNewPasswordScreen extends StatefulWidget {
-  final String uid;
+class SetNewPassword extends StatefulWidget {
+  final String username;
 
-  const SetNewPasswordScreen({Key? key, required this.uid}) : super(key: key);
+  const SetNewPassword({Key? key, required this.username}) : super(key: key);
 
   @override
-  _SetNewPasswordScreenState createState() => _SetNewPasswordScreenState();
+  _SetNewPasswordState createState() => _SetNewPasswordState();
 }
 
-class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
+class _SetNewPasswordState extends State<SetNewPassword> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _loading = false;
-  String? _errorMessage;
-  FirebaseAuth _auth = FirebaseAuth.instance;
+  String sha256hash(String password) {
+    var bytes = utf8.encode(password); // chuyển đổi chuỗi sang UTF-8
+    var digest = sha256.convert(bytes); // tạo digest từ chuỗi UTF-8
+    return digest.toString(); // trả về digest dưới dạng chuỗi
+  }
 
-  // Hàm xử lý khi nhấn nút đổi mật khẩu
-  void _handleSubmit() async {
+  bool isObscure = true;
+  void onObscurePressed() {
     setState(() {
-      _loading = true;
-      _errorMessage = null;
+      isObscure = !isObscure;
     });
+  }
 
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
+  void _setNewPassword() async {
+    String newPassword = _passwordController.text;
 
-    if (password != confirmPassword) {
-      setState(() {
-        _loading = false;
-        _errorMessage = 'Passwords do not match.';
-      });
-      return;
-    }
+    if (newPassword.isNotEmpty &&
+        newPassword == _confirmPasswordController.text) {
+      String hashedPassword = sha256hash(newPassword);
+      try {
+        QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: widget.username)
+            .get();
 
-    try {
-      // Đổi mật khẩu trên Firebase Authentication
-      await _auth.signInWithCustomToken(widget.uid);
-      await _auth.currentUser!.updatePassword(password);
-      await _auth.signOut();
+        if (userQuerySnapshot.docs.isNotEmpty) {
+          DocumentSnapshot userSnapshot = userQuerySnapshot.docs.first;
+          String uid = userSnapshot.id;
+          DocumentReference userRef =
+              FirebaseFirestore.instance.collection('users').doc(uid);
+          await userRef.update({'password': hashedPassword});
 
-      // Điều hướng đến màn hình đăng nhập
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        _loading = false;
-        _errorMessage = e.message;
-      });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đổi mật khẩu thành công'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          await Future.delayed(Duration(seconds: 2));
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => MainApp()),
+          );
+        } else {
+          throw Exception('Không tìm thấy người dùng');
+        }
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đổi mật khẩu thất bại: $error'),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mật khẩu không khớp nhau'),
+        ),
+      );
     }
   }
 
-  // Hàm build màn hình
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Set New Password'),
+        title: Text('Đổi mật khẩu'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-// Trường xác nhận mật khẩu mới
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm New Password',
-                    errorText: _errorMessage,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: isObscure,
+                decoration: InputDecoration(
+                  labelText: 'Mật khẩu mới',
+                  hintText: 'Nhập mật khẩu mới',
+                  prefixIcon: Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      isObscure ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: onObscurePressed,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                SizedBox(height: 16.0),
-// Nút đổi mật khẩu
-                ElevatedButton(
-                  onPressed: _loading ? null : _handleSubmit,
-                  child: _loading
-                      ? CircularProgressIndicator()
-                      : Text('Set New Password'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập mật khẩu mới';
+                  }
+                  if (value.length < 6) {
+                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  }
+                  if (!RegExp(
+                          r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{6,}$')
+                      .hasMatch(value)) {
+                    return 'Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: isObscure,
+                decoration: InputDecoration(
+                  labelText: 'Xác nhận mật khẩu mới',
+                  hintText: 'Nhập lại mật khẩu mới',
+                  prefixIcon: Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      isObscure ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: onObscurePressed,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ],
-            ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập lại mật khẩu mới';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Mật khẩu không trùng khớp';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _setNewPassword();
+                  }
+                },
+                child: Text('Cập nhật mật khẩu'),
+              ),
+            ],
           ),
         ),
       ),

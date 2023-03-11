@@ -111,6 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Cập nhật thông tin thành công')),
             );
+            Navigator.pop(context, updatedFields);
           }).catchError((error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Có lỗi xảy ra khi cập nhật thông tin')),
@@ -178,6 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                    SizedBox(height: 10.0),
                     TextFormField(
                       controller: _usernameController,
                       decoration: InputDecoration(

@@ -1,9 +1,8 @@
 import 'dart:convert';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   @override
@@ -11,176 +10,140 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String _currentPassword = '';
-  String _newPassword = '';
-  String _confirmNewPassword = '';
-  bool _currentPasswordVisible = false;
-  bool _newPasswordVisible = false;
-  bool _confirmNewPasswordVisible = false;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _showCurrentPassword = false;
+  bool _showNewPassword = false;
+  bool _showConfirmPassword = false;
 
-  Future<void> _changePassword() async {
-    final form = _formKey.currentState;
-    if (form != null && form.validate()) {
-      form.save();
+  Future<void> _updatePassword() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser?.uid)
+        .get();
+    final data = snapshot.data();
+    final currentPassword = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
 
-      // Lấy thông tin người dùng hiện tại từ Firebase Authentication
-      final user = FirebaseAuth.instance.currentUser;
-
-      // Lấy thông tin người dùng từ collection users
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user?.uid);
-      final userData = await userRef.get();
-
-      // So sánh mật khẩu hiện tại với password trong collection users
-      final currentPasswordHash =
-          sha256.convert(utf8.encode(_currentPassword)).toString();
-      final userPassword = userData.data()?['password'] as String;
-
-      if (userPassword != currentPasswordHash) {
+    if (currentPassword.isEmpty || newPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
+      );
+    } else {
+      final passwordHash =
+          sha256.convert(utf8.encode(currentPassword)).toString();
+      if (passwordHash == data!['password']) {
+        if (newPassword == _confirmPasswordController.text.trim()) {
+          final newHashedPassword =
+              sha256.convert(utf8.encode(newPassword)).toString();
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser?.uid)
+              .update({'password': newHashedPassword}).then((value) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Cập nhật mật khẩu thành công')),
+            );
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Có lỗi xảy ra khi cập nhật mật khẩu')),
+            );
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Xác nhận mật khẩu không khớp')),
+          );
+        }
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Mật khẩu hiện tại không đúng')),
         );
-        return;
       }
-
-      // Kiểm tra xác nhận mật khẩu mới
-      if (_newPassword != _confirmNewPassword) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mật khẩu mới không khớp')),
-        );
-        return;
-      }
-
-      // Cập nhật password mới cho người dùng
-      final newPasswordHash =
-          sha256.convert(utf8.encode(_newPassword)).toString();
-      await userRef.update({'password': newPasswordHash});
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật mật khẩu thành công')),
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Đổi mật khẩu'),
-        ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Mật khẩu hiện tại',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _currentPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _currentPasswordVisible = !_currentPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: !_currentPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập mật khẩu hiện tại';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _currentPassword = value!;
-                    },
+      appBar: AppBar(
+        title: Text('Đổi mật khẩu'),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _currentPasswordController,
+              decoration: InputDecoration(
+                labelText: 'Mật khẩu hiện tại',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showCurrentPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                   ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Mật khẩu mới',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _newPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _newPasswordVisible = !_newPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: !_newPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập mật khẩu mới';
-                      }
-                      if (value.length < 6) {
-                        return 'Mật khẩu mới phải có ít nhất 6 ký tự';
-                      }
-                      if (!RegExp(
-                              r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]+$')
-                          .hasMatch(value)) {
-                        return 'Mật khẩu mới phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _newPassword = value!;
-                    },
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Nhập lại mật khẩu mới',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _confirmNewPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _confirmNewPasswordVisible =
-                                !_confirmNewPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: !_confirmNewPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập lại mật khẩu mới';
-                      }
-                      if (value != _newPassword) {
-                        return 'Mật khẩu nhập lại không khớp';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _confirmNewPassword = value!;
-                    },
-                  ),
-                  SizedBox(height: 32.0),
-                  ElevatedButton(
-                    onPressed: _changePassword,
-                    child: Text('Đổi mật khẩu'),
-                  ),
-                ],
+                  onPressed: () {
+                    setState(() {
+                      _showCurrentPassword = !_showCurrentPassword;
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(),
               ),
+              obscureText: !_showCurrentPassword,
             ),
-          ),
-        ));
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _newPasswordController,
+              decoration: InputDecoration(
+                labelText: 'Mật khẩu mới',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showNewPassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showNewPassword = !_showNewPassword;
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(),
+              ),
+              obscureText: !_showNewPassword,
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _confirmPasswordController,
+              decoration: InputDecoration(
+                labelText: 'Xác nhận mật khẩu mới',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showConfirmPassword = !_showConfirmPassword;
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(),
+              ),
+              obscureText: !_showConfirmPassword,
+            ),
+            SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _updatePassword,
+              child: Text('Cập nhật mật khẩu'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
