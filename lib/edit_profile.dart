@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -20,6 +26,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _dobController = TextEditingController();
   String _gender = 'Khác';
   final List<String> _genderList = ['Nam', 'Nữ', 'Khác'];
+  late String avatarURL;
+  late String userId = FirebaseAuth.instance.currentUser!.uid;
 
   bool _validatePhone(String? value) {
     if (value != null &&
@@ -127,13 +135,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   @override
-  @override
   void initState() {
     super.initState();
-    final currentUser = FirebaseAuth.instance.currentUser;
     FirebaseFirestore.instance
         .collection('users')
-        .where('uid', isEqualTo: currentUser!.uid)
+        .where('uid', isEqualTo: userId)
         .get()
         .then((snapshot) {
       if (snapshot.docs.isNotEmpty) {
@@ -142,6 +148,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _fullNameController.text = data['fullName'];
         _phoneController.text = data['phone'];
         _emailController.text = data['email'];
+        avatarURL = data['avatarURL'];
         final dob = data['dob'];
         DateTime? dobDateTime;
         if (dob is String) {
@@ -160,9 +167,140 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (gender != null) {
           _gender = gender;
         }
+        if (data.containsKey('avatarURL')) {
+          avatarURL = data['avatarURL'];
+        }
         setState(() {});
       }
     });
+  }
+
+  Future<Widget> _getAvatar() async {
+    if (avatarURL != null && avatarURL.isNotEmpty) {
+      try {
+        final ref =
+            firebase_storage.FirebaseStorage.instance.refFromURL(avatarURL);
+        final url = await ref.getDownloadURL();
+        return ClipOval(
+          child: Image.network(
+            url,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error loading image: $e');
+      }
+    }
+    return CircleAvatar(
+      radius: 60,
+      child: Icon(Icons.person),
+    );
+  }
+
+  void _uploadAvatar() async {
+    final pickedFile =
+        await ImagePicker().getImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      final fileName = path.basename(file.path);
+      final destination = 'avatars/$userId/$fileName';
+      try {
+        final ref = firebase_storage.FirebaseStorage.instance.ref(destination);
+        final uploadTask = ref.putFile(file);
+        final snapshot = await uploadTask.whenComplete(() {});
+        final url = await snapshot.ref.getDownloadURL();
+        setState(() {
+          avatarURL = url;
+        });
+        // Lưu URL vào collection users của Firebase Firestore
+        final currentUser = FirebaseAuth.instance.currentUser;
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.uid)
+            .update({'avatarURL': url});
+      } catch (e) {
+        print('Error uploading avatar: $e');
+      }
+    }
+  }
+
+  void _showAvatarOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.person),
+                title: Text('Xem ảnh đại diện'),
+                onTap: () async {
+                  try {
+                    final ref = firebase_storage.FirebaseStorage.instance
+                        .refFromURL(avatarURL);
+                    final url = await ref.getDownloadURL();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (BuildContext context) {
+                        return Scaffold(
+                          backgroundColor: Colors.black,
+                          body: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Hero(
+                                  tag: 'imageHero',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Image.network(
+                                      url,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 30,
+                                right: 10,
+                                child: IconButton(
+                                  icon: Icon(Icons.close, color: Colors.white),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    );
+                  } catch (e) {
+                    print('Error loading image: $e');
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Đổi ảnh đại diện'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _uploadAvatar();
+                },
+              ),
+              // ListTile(
+              //   leading: Icon(Icons.download),
+              //   title: Text('Tải ảnh đại diện'),
+              //   onTap: () {},
+              // ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -179,7 +317,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                    SizedBox(height: 10.0),
+                    CircleAvatar(
+                      radius: 60,
+                      child: Hero(
+                        tag: 'imageHero',
+                        child: GestureDetector(
+                          onTap: () {
+                            _showAvatarOptions();
+                          },
+                          child: FutureBuilder<Widget>(
+                            future: _getAvatar(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return FittedBox(
+                                  fit: BoxFit.cover,
+                                  child: snapshot.data!,
+                                );
+                              } else {
+                                return Icon(Icons.person);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
                     TextFormField(
                       controller: _usernameController,
                       decoration: InputDecoration(

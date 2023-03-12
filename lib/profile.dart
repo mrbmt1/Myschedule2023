@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:myshedule/edit_profile.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:path/path.dart';
 
 class UserProfileScreen extends StatefulWidget {
   @override
@@ -18,22 +20,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _getUserData();
   }
 
-  Future<void> _getUserData() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      final uid = currentUser.uid;
-      final userSnapshot =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      setState(() {
-        _userData = userSnapshot.data()!;
-      });
-    }
-  }
-
-  Future<void> _refreshUserData() async {
-    await _getUserData();
-  }
-
   void _verifyPassword(BuildContext context) async {
     String password = '';
     await showDialog(
@@ -45,6 +31,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             obscureText: true,
             decoration: InputDecoration(
               hintText: 'Mật khẩu',
+              border: OutlineInputBorder(),
             ),
             onChanged: (value) {
               password = value;
@@ -97,6 +84,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  Future<void> _getUserData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final uid = currentUser.uid;
+      final userSnapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      setState(() {
+        _userData = userSnapshot.data()!;
+      });
+    }
+  }
+
+  Future<void> _refreshUserData() async {
+    await _getUserData();
+  }
+
+  Future<Widget> _getImage() async {
+    if (_userData.containsKey('avatarURL')) {
+      try {
+        final ref = firebase_storage.FirebaseStorage.instance
+            .refFromURL(_userData['avatarURL']);
+        final url = await ref.getDownloadURL();
+        return ClipOval(
+          child: Image.network(
+            url,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        print('Error loading image: $e');
+        return Text('Chưa có avatar');
+      }
+    } else {
+      return ClipOval(
+        child: Icon(Icons.person, size: 120),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,13 +138,67 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    enabled: false,
-                    initialValue: _userData['username'] ?? '',
-                    decoration: InputDecoration(
-                      labelText: 'Tên tài khoản',
-                      border: OutlineInputBorder(),
-                      disabledBorder: OutlineInputBorder(),
+                  GestureDetector(
+                    onTap: () async {
+                      if (_userData.containsKey('avatarURL')) {
+                        try {
+                          final ref = firebase_storage.FirebaseStorage.instance
+                              .refFromURL(_userData['avatarURL']);
+                          final url = await ref.getDownloadURL();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (BuildContext context) {
+                              return Scaffold(
+                                backgroundColor: Colors.black,
+                                body: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: Hero(
+                                        tag: 'imageHero',
+                                        child: Image.network(
+                                          url,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 30,
+                                      right: 10,
+                                      child: IconButton(
+                                        icon: Icon(Icons.close,
+                                            color: Colors.white),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          );
+                        } catch (e) {
+                          print('Error loading image: $e');
+                        }
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 60,
+                      child: Hero(
+                        tag: 'imageHero',
+                        child: FutureBuilder<Widget>(
+                          future: _getImage(),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return FittedBox(
+                                fit: BoxFit.cover,
+                                child: snapshot.data!,
+                              );
+                            } else {
+                              return Icon(Icons.person);
+                            }
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -125,6 +207,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     initialValue: _userData['fullName'] ?? '',
                     decoration: InputDecoration(
                       labelText: 'Họ và tên',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 16.0),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['dob'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Ngày sinh',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
                     ),
@@ -142,9 +234,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   SizedBox(height: 16.0),
                   TextFormField(
                     enabled: false,
-                    initialValue: _userData['dob'] ?? '',
+                    initialValue: _userData['username'] ?? '',
                     decoration: InputDecoration(
-                      labelText: 'Ngày sinh',
+                      labelText: 'Tên tài khoản',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 16.0),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['gender'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Giới tính',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
                     ),
@@ -169,6 +271,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       disabledBorder: OutlineInputBorder(),
                     ),
                   ),
+                  SizedBox(height: 50.0),
                 ],
               ),
       ),
