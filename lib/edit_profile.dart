@@ -5,12 +5,15 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -227,6 +230,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _downloadAvatar() async {
+    // Kiểm tra xem URL có tồn tại không
+    if (avatarURL != null && avatarURL.isNotEmpty) {
+      // Tạo thư mục lưu trữ
+      final directory = await getApplicationDocumentsDirectory();
+      // Lấy đường dẫn tệp tin để lưu trữ tệp hình ảnh
+      final file = File('${directory.path}/avatar.png');
+      try {
+        // Tải tệp hình ảnh từ URL và lưu trữ vào thiết bị
+        await firebase_storage.FirebaseStorage.instance
+            .refFromURL(avatarURL)
+            .writeToFile(file);
+        // Lưu trữ tệp hình ảnh vào thư viện hình ảnh của thiết bị
+        final result = await ImageGallerySaver.saveFile(file.path);
+        print('File saved to gallery: $result');
+      } catch (e) {
+        print('Error downloading avatar: $e');
+      }
+    }
+  }
+
   void _showAvatarOptions() {
     showModalBottomSheet(
       context: context,
@@ -281,6 +305,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   } catch (e) {
                     print('Error loading image: $e');
                   }
+                  // Navigator.pop(context);
                 },
               ),
               ListTile(
@@ -289,13 +314,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   _uploadAvatar();
+                  // Navigator.pop(context);
                 },
               ),
-              // ListTile(
-              //   leading: Icon(Icons.download),
-              //   title: Text('Tải ảnh đại diện'),
-              //   onTap: () {},
-              // ),
+              ListTile(
+                leading: Icon(Icons.download),
+                title: Text('Tải ảnh đại diện'),
+                onTap: () {
+                  _downloadAvatar();
+                  Navigator.pop(context);
+                },
+              ),
             ],
           ),
         );
@@ -447,6 +476,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         suffixIcon: Icon(Icons.person),
                       ),
                     ),
+                    SizedBox(height: 50.0),
                   ])))),
       floatingActionButton: FloatingActionButton(
         onPressed: _updateProfile,

@@ -13,9 +13,22 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'localizations/app_localizations.dart';
 import 'dart:ui' as ui;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//     FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // const AndroidInitializationSettings initializationSettingsAndroid =
+  //     AndroidInitializationSettings('ic_launcher');
+
+  // final InitializationSettings initializationSettings = InitializationSettings(
+  //   android: initializationSettingsAndroid,
+  // );
+
+  // await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -48,20 +61,10 @@ class _MainAppState extends State<MainApp> {
     }
   }
 
-  // Future<Locale> getLocale() async {
-  //   final locale = await ui.window.locale;
-  //   return locale;
-  // }
-
   @override
   void initState() {
     super.initState();
     _readLoginStatus();
-    // getLocale().then((locale) {
-    //   setState(() {
-    //     _locale = locale;
-    //   });
-    // });
   }
 
   Future<void> _readLoginStatus() async {

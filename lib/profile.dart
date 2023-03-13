@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:myshedule/edit_profile.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:path/path.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class UserProfileScreen extends StatefulWidget {
   @override
@@ -107,11 +108,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             .refFromURL(_userData['avatarURL']);
         final url = await ref.getDownloadURL();
         return ClipOval(
-          child: Image.network(
-            url,
+          child: CachedNetworkImage(
+            imageUrl: url,
             width: 120,
             height: 120,
             fit: BoxFit.cover,
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => Icon(Icons.person),
           ),
         );
       } catch (e) {
@@ -209,6 +212,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Họ và tên',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.person),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -219,6 +223,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Ngày sinh',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -229,6 +234,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Giới tính',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.person),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -239,6 +245,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Tên tài khoản',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.person_pin),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -249,16 +256,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Giới tính',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    enabled: false,
-                    initialValue: _userData['email'] ?? '',
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.people_outline_sharp),
                     ),
                   ),
                   SizedBox(height: 16.0),
@@ -269,6 +267,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       labelText: 'Số điện thoại',
                       border: OutlineInputBorder(),
                       disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.phone),
                     ),
                   ),
                   SizedBox(height: 50.0),
