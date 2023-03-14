@@ -61,11 +61,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   if (storedPassword == passwordHash) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => EditProfileScreen()),
-                    ).then((_) {
-                      setState(() {
-                        password = '';
-                      });
+                      MaterialPageRoute(
+                          builder: (BuildContext context) =>
+                              EditProfileScreen()),
+                    ).then((result) {
+                      if (result != null && result) {}
                     });
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -3,8 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:myshedule/forgot_password/forgot_password.dart';
 import 'package:myshedule/register.dart';
 import 'package:myshedule/create_task.dart';
+import 'package:myshedule/theme.dart';
 import 'package:myshedule/todolist.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,19 +22,17 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // const AndroidInitializationSettings initializationSettingsAndroid =
-  //     AndroidInitializationSettings('ic_launcher');
-
-  // final InitializationSettings initializationSettings = InitializationSettings(
-  //   android: initializationSettingsAndroid,
-  // );
-
-  // await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool darkTheme = prefs.getBool('darkTheme') ?? false;
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MaterialApp(home: Scaffold(body: MainApp())));
+  runApp(
+    ChangeNotifierProvider<ThemeNotifier>(
+      create: (_) => ThemeNotifier(),
+      child: ThemeConfiguration(child: MainApp()),
+    ),
+  );
 }
 
 class MainApp extends StatefulWidget {
@@ -148,17 +148,18 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return MaterialApp(
-      // localizationsDelegates: [
-      //   AppLocalizations.delegate,
-      //   GlobalMaterialLocalizations.delegate,
-      //   GlobalWidgetsLocalizations.delegate,
-      // ],
-      // supportedLocales: [
-      //   Locale('en', ''),
-      //   Locale('vi', ''),
-      // ],
-      // locale: _locale,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+      ),
+      themeMode: themeNotifier.darkTheme ? ThemeMode.dark : ThemeMode.light,
       scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
       home: Scaffold(
         key: _scaffoldKey,

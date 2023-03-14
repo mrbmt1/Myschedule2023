@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myshedule/about.dart';
 import 'package:myshedule/feedback.dart';
+import 'package:myshedule/theme.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'localizations/app_localizations.dart';
 import 'change_password.dart';
@@ -10,6 +12,8 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Cài đặt'),
@@ -18,9 +22,17 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Divider(),
           ListTile(
-            leading: Icon(Icons.palette),
-            title: Text('Giao diện tối'),
-            onTap: () {},
+            leading: Icon(Icons.nightlight_round),
+            title: Text('Chế độ tối'),
+            trailing: Switch(
+              value: themeNotifier.darkTheme,
+              onChanged: (value) {
+                themeNotifier.toggleTheme();
+                SharedPreferences.getInstance().then((prefs) {
+                  prefs.setBool('darkTheme', value);
+                });
+              },
+            ),
           ),
           Divider(),
           ListTile(

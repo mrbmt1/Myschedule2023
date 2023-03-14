@@ -1,99 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DarkModeScreen extends StatefulWidget {
-  @override
-  _DarkModeScreenState createState() => _DarkModeScreenState();
+class ThemeNotifier extends ChangeNotifier {
+  final String key = "theme";
+  SharedPreferences? _prefs;
+  bool? _darkTheme;
+
+  bool get darkTheme => _darkTheme ?? false;
+
+  ThemeNotifier() {
+    _darkTheme = false;
+    _loadFromPrefs();
+  }
+
+  toggleTheme() {
+    _darkTheme = !_darkTheme!;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  _initPrefs() async {
+    if (_prefs == null) {
+      _prefs = await SharedPreferences.getInstance();
+    }
+  }
+
+  _loadFromPrefs() async {
+    await _initPrefs();
+    _darkTheme = _prefs!.getBool(key) ?? false;
+    notifyListeners();
+  }
+
+  _saveToPrefs() async {
+    await _initPrefs();
+    _prefs!.setBool(key, _darkTheme!);
+  }
 }
 
-class _DarkModeScreenState extends State<DarkModeScreen> {
-  bool _isDarkModeEnabled = false;
+class ThemeConfiguration extends StatelessWidget {
+  final Widget child;
+
+  ThemeConfiguration({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Dark Mode'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Enable Dark Mode',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 20),
-            Switch(
-              value: _isDarkModeEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _isDarkModeEnabled = value;
-                });
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
 
-                if (_isDarkModeEnabled) {
-                  // Enable dark mode
-                  _setDarkMode();
-                } else {
-                  // Disable dark mode
-                  _setLightMode();
-                }
-              },
-            ),
-          ],
-        ),
+    return MaterialApp(
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
       ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+      ),
+      themeMode: themeNotifier.darkTheme ? ThemeMode.dark : ThemeMode.light,
+      home: child,
     );
-  }
-
-  void _setDarkMode() {
-    // Configure the theme for dark mode
-    ThemeData darkTheme = ThemeData.dark().copyWith(
-      primaryColor: Colors.blueGrey[900],
-      accentColor: Colors.blueGrey[600],
-      scaffoldBackgroundColor: Colors.blueGrey[900],
-      appBarTheme: AppBarTheme(
-        color: Colors.blueGrey[900],
-        elevation: 0,
-      ),
-      textTheme: TextTheme(
-        bodyText2: TextStyle(
-          color: Colors.white,
-        ),
-      ),
-      iconTheme: IconThemeData(
-        color: Colors.white,
-      ),
-    );
-
-    // Set the app's theme to dark mode
-    _applyTheme(darkTheme);
-  }
-
-  void _setLightMode() {
-    // Configure the theme for light mode
-    ThemeData lightTheme = ThemeData.light();
-
-    // Set the app's theme to light mode
-    _applyTheme(lightTheme);
-  }
-
-  void _applyTheme(ThemeData theme) {
-    // Update the app's theme
-    MaterialApp app = MaterialApp(
-      title: 'My App',
-      theme: theme,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('My App'),
-        ),
-        body: Container(),
-      ),
-    );
-
-    // Replace the root widget with the updated app
-    runApp(app);
   }
 }

@@ -279,8 +279,11 @@ class TodoListScreen extends StatelessWidget {
           // Kiểm tra xem phần đang hiển thị có phải là phần trống hay không
           Widget? emptyListWidget;
           if (todoList.isEmpty) {
-            emptyListWidget = Center(
-              child: Text('Không có công việc nào trong danh sách'),
+            emptyListWidget = Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Center(
+                child: Text('Không có công việc nào trong danh sách'),
+              ),
             );
           }
 

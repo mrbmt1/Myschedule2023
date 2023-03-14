@@ -122,7 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Cập nhật thông tin thành công')),
             );
-            Navigator.pop(context, updatedFields);
+            Navigator.pop(context, true);
           }).catchError((error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Có lỗi xảy ra khi cập nhật thông tin')),

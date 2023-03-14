@@ -141,7 +141,25 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.save),
         onPressed: () async {
-          if (_content.isNotEmpty) {
+          if (_content == null || _content!.isEmpty) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Chưa nhập nội dung"),
+                  content: Text("Vui lòng nhập nội dung trước khi lưu"),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text("Đóng"),
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
             User? currentUser = FirebaseAuth.instance.currentUser;
             if (currentUser != null) {
               await FirebaseFirestore.instance
