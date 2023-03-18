@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myshedule/birthdaylist.dart';
+import 'package:myshedule/calendar.dart';
+import 'package:myshedule/event.dart';
+import 'package:myshedule/group_schedule.dart';
 import 'package:myshedule/search.dart';
 import 'edit_task.dart';
 import 'main.dart';
@@ -14,6 +18,8 @@ import 'dart:ui' as ui;
 import 'package:unorm_dart/unorm_dart.dart';
 import 'setting.dart';
 import 'task_widget.dart';
+import 'package:timezone/data/latest.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 //log out function
 void logout(BuildContext context) async {
@@ -56,37 +62,50 @@ showNotificationDialog(BuildContext context, TodoItem todo) async {
           TextButton(
             child: Text('Tắt thông báo'),
             onPressed: () {
-              Navigator.of(context).pop('Tắt thông báo');
+              FirebaseFirestore.instance
+                  .collection('tasks')
+                  .doc(todo.id)
+                  .update({'isNotification': false});
+              if (todo.isNotification) {
+                FlutterLocalNotificationsPlugin().cancel(todo.notificationID);
+              }
+              Navigator.of(context).pop();
             },
           ),
           TextButton(
             child: Text('Đặt lại giờ thông báo'),
-            onPressed: () {
-              Navigator.of(context).pop('Đặt lại giờ thông báo');
+            onPressed: () async {
+              var newTime = await showTimePicker(
+                context: context,
+                initialTime: todo.timeNotification ?? TimeOfDay.now(),
+              );
+              if (newTime != null) {
+                var notificationTime = todo.getDateTime();
+                notificationTime = DateTime(
+                  notificationTime.year,
+                  notificationTime.month,
+                  notificationTime.day,
+                  newTime.hour,
+                  newTime.minute,
+                );
+                FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(todo.id)
+                    .update({
+                  'timeNotification': newTime.format(context),
+                  'isNotification': true,
+                });
+                if (todo.isNotification) {
+                  FlutterLocalNotificationsPlugin().cancel(todo.notificationID);
+                }
+              }
+              Navigator.of(context).pop();
             },
           ),
         ],
       );
     },
   );
-
-  if (result == 'Tắt thông báo') {
-    FirebaseFirestore.instance
-        .collection('tasks')
-        .doc(todo.id)
-        .update({'isNotification': false});
-  } else if (result == 'Đặt lại giờ thông báo') {
-    var newTime = await showTimePicker(
-      context: context,
-      initialTime: todo.timeNotification ?? TimeOfDay.now(),
-    );
-    if (newTime != null) {
-      FirebaseFirestore.instance.collection('tasks').doc(todo.id).update({
-        'timeNotification': newTime.format(context),
-        'isNotification': true,
-      });
-    }
-  }
 }
 
 class TodoItem {
@@ -94,18 +113,18 @@ class TodoItem {
   final String content;
   bool completed;
   DateTime? date;
-  String? title;
   String? description;
   TimeOfDay? time;
   TimeOfDay? timeNotification;
   bool isNotification;
+  int notificationID;
 
   TodoItem({
     required this.id,
     required this.content,
     this.completed = false,
-    this.title,
     this.description,
+    required this.notificationID,
     this.date,
     this.time,
     this.timeNotification,
@@ -117,14 +136,15 @@ class TodoItem {
     final year = date?.year ?? now.year;
     final month = date?.month ?? now.month;
     final day = date?.day ?? now.day;
-    final hour = time?.hour ?? 0;
-    final minute = time?.minute ?? 0;
+    final hour = time?.hour ?? TimeOfDay.now().hour;
+    final minute = time?.minute ?? TimeOfDay.now().minute;
     return DateTime(year, month, day, hour, minute);
   }
 
   factory TodoItem.fromSnapshot(DocumentSnapshot snapshot) {
     var timeFromSnapshot = snapshot['timeOfDueDay'];
     TimeOfDay? time;
+
     if (timeFromSnapshot is String) {
       time = TimeOfDay(
         hour: DateFormat('HH:mm').parse(timeFromSnapshot).hour,
@@ -153,6 +173,7 @@ class TodoItem {
 
     return TodoItem(
       id: snapshot.id,
+      notificationID: snapshot['notificationID'],
       content: snapshot['description'] ?? '',
       completed: snapshot['completed'] ?? false,
       date: snapshot['dueDate']?.toDate(),
@@ -164,7 +185,51 @@ class TodoItem {
 }
 
 class TodoListScreen extends StatelessWidget {
-  const TodoListScreen({Key? key}) : super(key: key);
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  Future<void> _showNotification(
+    String title,
+    String message,
+    DateTime notificationTime,
+    int notificationId,
+  ) async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onSelectNotification: (String? payload) async {},
+    );
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'channel_id',
+      'channel_name',
+      'channel_description',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId,
+      title,
+      message,
+      tz.TZDateTime.from(notificationTime, tz.local),
+      notificationDetails,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: 'default',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +239,6 @@ class TodoListScreen extends StatelessWidget {
         child: Text('Vui lòng đăng nhập để xem danh sách task'),
       );
     }
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Danh sách lịch của tôi'),
@@ -195,9 +259,7 @@ class TodoListScreen extends StatelessWidget {
           children: [
             DrawerHeader(
               child: Text('Menu'),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
+              decoration: BoxDecoration(),
             ),
             ListTile(
               leading: Icon(Icons.person),
@@ -209,6 +271,46 @@ class TodoListScreen extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: Icon(Icons.loop_outlined),
+              title: Text('Thời gian biểu'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ScheduleScreen()),
+                );
+              },
+            ),
+            // ListTile(
+            //   leading: Icon(Icons.groups_2),
+            //   title: Text('Lịch chung'),
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => GroupSchdeduleScreen()),
+            //     );
+            //   },
+            // ),
+            ListTile(
+              leading: Icon(Icons.cake),
+              title: Text('Sinh nhật'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => BirthdayScreen()),
+                );
+              },
+            ),
+            // ListTile(
+            //   leading: Icon(Icons.local_activity_rounded),
+            //   title: Text('Sự kiện'),
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => EventScreen()),
+            //     );
+            //   },
+            // ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Cài đặt'),
@@ -233,6 +335,7 @@ class TodoListScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('tasks')
             .where('userID', isEqualTo: currentUser.uid)
+            .orderBy('timeOfDueDay')
             .orderBy('dueDate')
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -258,10 +361,9 @@ class TodoListScreen extends StatelessWidget {
           List<TodoItem> afterList = [];
 
           todoList.forEach((item) {
-            DateTime itemDate = DateTime(item.date!.year, item.date!.month,
-                item.date!.day); // Lấy ra ngày/tháng/năm của item.date
-            DateTime nowDate = DateTime(
-                now.year, now.month, now.day); // Lấy ra ngày/tháng/năm hiện tại
+            DateTime itemDate =
+                DateTime(item.date!.year, item.date!.month, item.date!.day);
+            DateTime nowDate = DateTime(now.year, now.month, now.day);
 
             if (itemDate.isBefore(nowDate)) {
               beforeList.add(item);
@@ -270,12 +372,43 @@ class TodoListScreen extends StatelessWidget {
             } else {
               afterList.add(item);
             }
+
+//thông báo của từng task nếu isNotification = true
+            if (item.isNotification) {
+              final notificationTime = tz.TZDateTime(
+                tz.local,
+                item.date!.year,
+                item.date!.month,
+                item.date!.day,
+                item.timeNotification!.hour,
+                item.timeNotification!.minute,
+              );
+              final notificationId = item.notificationID;
+              final time = DateTime(
+                item.date!.year,
+                item.date!.month,
+                item.date!.day,
+                item.time!.hour,
+                item.time!.minute,
+              );
+              final timeFormat = DateFormat.Hm();
+              final dateFormat = DateFormat('dd/MM/yyyy');
+              _showNotification(
+                'Bạn có lịch: ${item.content}',
+                'Hạn chót lúc: ${timeFormat.format(time)} ${dateFormat.format(item.date!)}',
+                notificationTime,
+                notificationId,
+              );
+            }
           });
 
 // Sắp xếp danh sách theo ngày hạn
-          beforeList.sort((a, b) => a.date!.compareTo(b.date!));
-          todayList.sort((a, b) => a.date!.compareTo(b.date!));
-          afterList.sort((a, b) => a.date!.compareTo(b.date!));
+          beforeList
+              .sort((a, b) => a.getDateTime()!.compareTo(b.getDateTime()!));
+          todayList
+              .sort((a, b) => a.getDateTime()!.compareTo(b.getDateTime()!));
+          afterList
+              .sort((a, b) => a.getDateTime()!.compareTo(b.getDateTime()!));
           // Kiểm tra xem phần đang hiển thị có phải là phần trống hay không
           Widget? emptyListWidget;
           if (todoList.isEmpty) {
@@ -318,7 +451,7 @@ class TodoListScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: Icon(Icons.note_add_rounded),
         onPressed: () async {
           TodoItem? newTodo = await Navigator.push<TodoItem?>(
             context,

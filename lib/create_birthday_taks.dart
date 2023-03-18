@@ -2,20 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myshedule/birthdaylist.dart';
 import 'package:myshedule/todolist.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:unorm_dart/unorm_dart.dart';
 
-class CreateTaskScreen extends StatefulWidget {
-  const CreateTaskScreen({Key? key}) : super(key: key);
+class CreateBirthDayTaskScreen extends StatefulWidget {
+  const CreateBirthDayTaskScreen({Key? key}) : super(key: key);
 
   @override
-  _CreateTaskScreenState createState() => _CreateTaskScreenState();
+  _CreateBirthDayTaskScreenState createState() =>
+      _CreateBirthDayTaskScreenState();
 }
 
-class _CreateTaskScreenState extends State<CreateTaskScreen> {
+class _CreateBirthDayTaskScreenState extends State<CreateBirthDayTaskScreen> {
   static int _lastNotificationID = 0;
   int newNotificationID = ++_lastNotificationID;
   String? _content;
@@ -28,8 +30,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2200),
     );
     if (selectedDate != null) {
       setState(() {
@@ -67,7 +69,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tạo task mới'),
+        title: Text('Sinh nhật'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -81,9 +83,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'Nhập nội dung task',
+                hintText: 'Sinh nhật của ai nhỉ?',
                 border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.edit_document),
+                suffixIcon: Icon(Icons.cake),
               ),
             ),
             SizedBox(height: 20),
@@ -94,18 +96,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   Icon(Icons.calendar_today),
                   SizedBox(width: 8),
                   Text(
-                      'Ngày đến hạn: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
-                ],
-              ),
-            ),
-            SizedBox(height: 0),
-            TextButton(
-              onPressed: _selectTime,
-              child: Row(
-                children: [
-                  Icon(Icons.access_time),
-                  SizedBox(width: 8),
-                  Text('Giờ đến hạn: ${_selectedTime.format(context)}'),
+                      'Sinh nhật: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
                 ],
               ),
             ),
@@ -131,7 +122,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           if (_content == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Vui lòng nhập nội dung task!'),
+                content: Text('Vui lòng cho biết sinh nhật của ai'),
                 duration: Duration(seconds: 2),
               ),
             );
@@ -143,18 +134,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               content: _content!,
             );
             newTodo.date = _selectedDate;
-            newTodo.time = _selectedTime;
             newTodo.timeNotification = _selectedTimeNotification;
             newTodo.isNotification = _isNotification;
             User? currentUser = FirebaseAuth.instance.currentUser;
             if (currentUser != null) {
-              await FirebaseFirestore.instance.collection('tasks').add({
+              await FirebaseFirestore.instance.collection('birthdays').add({
                 'userID': currentUser.uid,
-                'completed': false,
                 'createdAt': DateTime.now(),
-                'dueDate': newTodo.date,
+                'birthDay': newTodo.date,
                 'description': newTodo.content,
-                'timeOfDueDay': "${newTodo.time!.hour}:${newTodo.time!.minute}",
                 'isNotification': newTodo.isNotification,
                 'timeNotification':
                     "${newTodo.timeNotification!.hour}:${newTodo.timeNotification!.minute}",
@@ -163,7 +151,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             }
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => TodoListScreen()),
+              MaterialPageRoute(builder: (_) => BirthdayScreen()),
             );
           }
         },

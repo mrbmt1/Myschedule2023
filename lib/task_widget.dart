@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:myshedule/create_task.dart';
 import 'package:myshedule/todolist.dart';
@@ -9,6 +10,21 @@ class TaskWidget extends StatelessWidget {
   final TodoItem todo;
 
   TaskWidget({required this.todo});
+
+  String getRemainingTime() {
+    DateTime now = DateTime.now();
+    DateTime deadline = DateTime(todo.date!.year, todo.date!.month,
+        todo.date!.day, todo.time!.hour, todo.time!.minute);
+    Duration remainingDuration = deadline.difference(now);
+
+    if (remainingDuration.inSeconds < 0) {
+      return 'Đã hết hạn';
+    } else if (remainingDuration.inDays > 0) {
+      return '${remainingDuration.inDays} ngày ${remainingDuration.inHours.remainder(24)} giờ';
+    } else {
+      return '${remainingDuration.inHours.remainder(24)} giờ ${remainingDuration.inMinutes.remainder(60)} phút';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +58,7 @@ class TaskWidget extends StatelessWidget {
                     'completed': isCompleted,
                     'isNotification': isNotification,
                   });
+                  FlutterLocalNotificationsPlugin().cancel(todo.notificationID);
                 }
               },
             ),
@@ -71,7 +88,23 @@ class TaskWidget extends StatelessWidget {
                                 ), // Hiển thị giá trị của timeNotification
                               ],
                             ),
-                          )
+                          ),
+                        if (todo.date != null &&
+                            !todo.completed &&
+                            DateTime.now().isAfter(DateTime(
+                                todo.date!.year,
+                                todo.date!.month,
+                                todo.date!.day,
+                                todo.time!.hour,
+                                todo.time!.minute)))
+                          Padding(
+                            padding: EdgeInsets.only(left: 7),
+                            child: Text(
+                              'Quá hạn',
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 204, 123, 1)),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -84,13 +117,40 @@ class TaskWidget extends StatelessWidget {
                         fontSize: 20),
                   ),
                   if (todo.date != null)
-                    Text(
-                      'Hạn chót: ${todo.time != null ? DateFormat('HH:mm - ').format(DateTime(2000, 1, 1, todo.time!.hour, todo.time!.minute)) : ""}${DateFormat('dd/MM/yyyy').format(todo.date!)}',
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Hạn chót: ',
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 221, 6, 6),
+                              decoration: todo.completed
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                          if (todo.time != null)
+                            TextSpan(
+                              text: DateFormat('HH:mm - ').format(DateTime(2000,
+                                  1, 1, todo.time!.hour, todo.time!.minute)),
+                            ),
+                          TextSpan(
+                            text: DateFormat('dd/MM/yyyy').format(todo.date!),
+                          ),
+                        ],
+                      ),
                       style: TextStyle(
                         decoration:
                             todo.completed ? TextDecoration.lineThrough : null,
                       ),
                     ),
+                  Text(
+                    'Còn lại:  ${getRemainingTime()}',
+                    style: TextStyle(
+                      decoration:
+                          todo.completed ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
                 ],
               ),
             ),
