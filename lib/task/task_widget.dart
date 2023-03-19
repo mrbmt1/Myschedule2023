@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
-import 'package:myshedule/create_task.dart';
-import 'package:myshedule/todolist.dart';
+import 'package:myshedule/task/todotask.dart';
 import 'edit_task.dart';
 
 class TaskWidget extends StatelessWidget {

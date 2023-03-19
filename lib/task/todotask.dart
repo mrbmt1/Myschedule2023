@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myshedule/birthdaylist.dart';
-import 'package:myshedule/calendar.dart';
-import 'package:myshedule/event.dart';
-import 'package:myshedule/group_schedule.dart';
-import 'package:myshedule/search.dart';
+import 'package:myshedule/birthday_task/birthdaylist.dart';
+import 'package:myshedule/main.dart';
+import 'package:myshedule/profile/profile.dart';
+import 'package:myshedule/school_schedule/fri_school_schedule.dart';
+import 'package:myshedule/school_schedule/mon_school_schedule.dart';
+import 'package:myshedule/school_schedule/sat_school_schedule.dart';
+import 'package:myshedule/school_schedule/sun_school_schedule.dart';
+import 'package:myshedule/school_schedule/thu_school_schedule.dart';
+import 'package:myshedule/school_schedule/tue_school_schedule.dart';
+import 'package:myshedule/school_schedule/wed_school_schedule.dart';
+import 'package:myshedule/school_schedule_navigator%20.dart';
+import 'package:myshedule/setting.dart';
+import 'package:myshedule/task/search_task.dart';
 import 'edit_task.dart';
-import 'main.dart';
-import 'profile.dart';
 import 'create_task.dart';
 import 'edit_task.dart';
-import 'package:myshedule/todolist.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:ui' as ui;
 import 'package:unorm_dart/unorm_dart.dart';
-import 'setting.dart';
 import 'task_widget.dart';
 import 'package:timezone/data/latest.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -272,25 +276,15 @@ class TodoListScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.loop_outlined),
-              title: Text('Thời gian biểu'),
+              leading: Icon(Icons.list_sharp),
+              title: Text('Thời khóa biểu'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ScheduleScreen()),
+                  MaterialPageRoute(builder: (_) => SchoolScheduleNavigator()),
                 );
               },
             ),
-            // ListTile(
-            //   leading: Icon(Icons.groups_2),
-            //   title: Text('Lịch chung'),
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => GroupSchdeduleScreen()),
-            //     );
-            //   },
-            // ),
             ListTile(
               leading: Icon(Icons.cake),
               title: Text('Sinh nhật'),
@@ -301,16 +295,6 @@ class TodoListScreen extends StatelessWidget {
                 );
               },
             ),
-            // ListTile(
-            //   leading: Icon(Icons.local_activity_rounded),
-            //   title: Text('Sự kiện'),
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => EventScreen()),
-            //     );
-            //   },
-            // ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Cài đặt'),

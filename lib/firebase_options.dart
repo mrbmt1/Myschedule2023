@@ -57,7 +57,8 @@ class DefaultFirebaseOptions {
     appId: '1:432303157141:android:236d1379046b1ca22e109c',
     messagingSenderId: '432303157141',
     projectId: 'myschedule-3a44a',
-    databaseURL: 'https://myschedule-3a44a-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://myschedule-3a44a-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'myschedule-3a44a.appspot.com',
   );
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myshedule/task/todotask.dart';
 import 'edit_task.dart';
-import 'package:myshedule/todolist.dart';
 import 'task_widget.dart';
 
 class SearchScreen extends StatefulWidget {

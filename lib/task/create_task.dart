@@ -2,48 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myshedule/todolist.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:myshedule/task/todotask.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:unorm_dart/unorm_dart.dart';
 
-class EditTaskScreen extends StatefulWidget {
-  final TodoItem todo;
-
-  EditTaskScreen({required this.todo});
+class CreateTaskScreen extends StatefulWidget {
+  const CreateTaskScreen({Key? key}) : super(key: key);
 
   @override
-  _EditTaskScreenState createState() => _EditTaskScreenState();
+  _CreateTaskScreenState createState() => _CreateTaskScreenState();
 }
 
-class _EditTaskScreenState extends State<EditTaskScreen> {
-  late String _content;
-  late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
-  late TextEditingController _contentController;
-  late TimeOfDay _selectedTimeNotification;
-  late bool _isNotification = false;
-  late int newNotificationID;
-
-  @override
-  void initState() {
-    super.initState();
-    newNotificationID = widget.todo.notificationID;
-    _content = widget.todo.content;
-    _selectedDate = widget.todo.date!;
-    _selectedTime = widget.todo.time!;
-    _contentController = TextEditingController(text: _content);
-    _selectedTimeNotification = widget.todo.timeNotification!;
-    _isNotification = widget.todo.isNotification;
-  }
-
-  @override
-  void dispose() {
-    _contentController.dispose();
-    super.dispose();
-  }
+class _CreateTaskScreenState extends State<CreateTaskScreen> {
+  static int _lastNotificationID = 0;
+  int newNotificationID = ++_lastNotificationID;
+  String? _content;
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  TimeOfDay _selectedTimeNotification = TimeOfDay(hour: 0, minute: 0);
+  bool _isNotification = false;
 
   Future<void> _selectDate() async {
     final DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
@@ -57,7 +41,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   Future<void> _selectTime() async {
     final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: TimeOfDay.now(),
     );
     if (selectedTime != null) {
       setState(() {
@@ -69,7 +53,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   Future<void> _selectTimeNotification() async {
     final TimeOfDay? selectedTimeNotification = await showTimePicker(
       context: context,
-      initialTime: _selectedTimeNotification,
+      initialTime: TimeOfDay(hour: 0, minute: 0),
     );
     if (selectedTimeNotification != null) {
       setState(() {
@@ -83,10 +67,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chỉnh sửa task'),
+        title: Text('Tạo task mới'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -101,9 +85,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.edit_document),
               ),
-              controller: _contentController,
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 20),
             TextButton(
               onPressed: _selectDate,
               child: Row(
@@ -145,42 +128,43 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.save),
         onPressed: () async {
-          if (_content == null || _content!.isEmpty) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Chưa nhập nội dung"),
-                  content: Text("Vui lòng nhập nội dung trước khi lưu"),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text("Đóng"),
-                    ),
-                  ],
-                );
-              },
+          if (_content == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Vui lòng nhập nội dung task!'),
+                duration: Duration(seconds: 2),
+              ),
             );
           } else {
+            _lastNotificationID++;
+            TodoItem newTodo = TodoItem(
+              id: '1',
+              notificationID: newNotificationID,
+              content: _content!,
+            );
+            newTodo.date = _selectedDate;
+            newTodo.time = _selectedTime;
+            newTodo.timeNotification = _selectedTimeNotification;
+            newTodo.isNotification = _isNotification;
             User? currentUser = FirebaseAuth.instance.currentUser;
             if (currentUser != null) {
-              await FirebaseFirestore.instance
-                  .collection('tasks')
-                  .doc(widget.todo.id)
-                  .update({
-                'description': _content,
-                'dueDate': _selectedDate,
-                'updatedAt': DateTime.now(),
-                'dueDate': _selectedDate,
-                'description': _content,
-                'timeOfDueDay': _selectedTime.format(context),
-                'isNotification': _isNotification,
-                'timeNotification': _selectedTimeNotification.format(context),
+              await FirebaseFirestore.instance.collection('tasks').add({
+                'userID': currentUser.uid,
+                'completed': false,
+                'createdAt': DateTime.now(),
+                'dueDate': newTodo.date,
+                'description': newTodo.content,
+                'timeOfDueDay': "${newTodo.time!.hour}:${newTodo.time!.minute}",
+                'isNotification': newTodo.isNotification,
+                'timeNotification':
+                    "${newTodo.timeNotification!.hour}:${newTodo.timeNotification!.minute}",
+                'notificationID': _lastNotificationID,
               });
             }
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => TodoListScreen()),
+            );
           }
         },
       ),

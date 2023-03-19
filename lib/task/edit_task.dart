@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myshedule/birthdaylist.dart';
+import 'package:myshedule/task/todotask.dart';
 
-class EditBirthDayTaskScreen extends StatefulWidget {
-  final BirthDayItem birthdayTodo;
+class EditTaskScreen extends StatefulWidget {
+  final TodoItem todo;
 
-  EditBirthDayTaskScreen({required this.birthdayTodo});
+  EditTaskScreen({required this.todo});
 
   @override
-  _EditBirthDayTaskScreenState createState() => _EditBirthDayTaskScreenState();
+  _EditTaskScreenState createState() => _EditTaskScreenState();
 }
 
-class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
+class _EditTaskScreenState extends State<EditTaskScreen> {
   late String _content;
   late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
   late TextEditingController _contentController;
   late TimeOfDay _selectedTimeNotification;
   late bool _isNotification = false;
@@ -24,12 +25,13 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
   @override
   void initState() {
     super.initState();
-    newNotificationID = widget.birthdayTodo.notificationID;
-    _content = widget.birthdayTodo.content;
-    _selectedDate = widget.birthdayTodo.date!;
+    newNotificationID = widget.todo.notificationID;
+    _content = widget.todo.content;
+    _selectedDate = widget.todo.date!;
+    _selectedTime = widget.todo.time!;
     _contentController = TextEditingController(text: _content);
-    _selectedTimeNotification = widget.birthdayTodo.timeNotification!;
-    _isNotification = widget.birthdayTodo.isNotification;
+    _selectedTimeNotification = widget.todo.timeNotification!;
+    _isNotification = widget.todo.isNotification;
   }
 
   @override
@@ -42,12 +44,24 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
     final DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2200),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
     if (selectedDate != null) {
       setState(() {
         _selectedDate = selectedDate;
+      });
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (selectedTime != null) {
+      setState(() {
+        _selectedTime = selectedTime;
       });
     }
   }
@@ -69,7 +83,7 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chỉnh sửa ngày sinh nhật'),
+        title: Text('Chỉnh sửa task'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -83,9 +97,9 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'Nhập nội dung ngày sinh nhật',
+                hintText: 'Nhập nội dung task',
                 border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.cake_rounded),
+                suffixIcon: Icon(Icons.edit_document),
               ),
               controller: _contentController,
             ),
@@ -97,7 +111,18 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
                   Icon(Icons.calendar_today),
                   SizedBox(width: 8),
                   Text(
-                      'Sinh nhật: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
+                      'Ngày đến hạn: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
+                ],
+              ),
+            ),
+            SizedBox(height: 0),
+            TextButton(
+              onPressed: _selectTime,
+              child: Row(
+                children: [
+                  Icon(Icons.access_time),
+                  SizedBox(width: 8),
+                  Text('Giờ đến hạn: ${_selectedTime.format(context)}'),
                 ],
               ),
             ),
@@ -142,13 +167,15 @@ class _EditBirthDayTaskScreenState extends State<EditBirthDayTaskScreen> {
             User? currentUser = FirebaseAuth.instance.currentUser;
             if (currentUser != null) {
               await FirebaseFirestore.instance
-                  .collection('birthdays')
-                  .doc(widget.birthdayTodo.id)
+                  .collection('tasks')
+                  .doc(widget.todo.id)
                   .update({
                 'description': _content,
+                'dueDate': _selectedDate,
                 'updatedAt': DateTime.now(),
-                'birthDay': _selectedDate,
+                'dueDate': _selectedDate,
                 'description': _content,
+                'timeOfDueDay': _selectedTime.format(context),
                 'isNotification': _isNotification,
                 'timeNotification': _selectedTimeNotification.format(context),
               });

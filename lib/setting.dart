@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:myshedule/about.dart';
-import 'package:myshedule/feedback.dart';
-import 'package:myshedule/theme.dart';
+import 'package:myshedule/setting_option/about.dart';
+import 'package:myshedule/setting_option/change_password.dart';
+import 'package:myshedule/setting_option/feedback.dart';
+import 'package:myshedule/setting_option/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'localizations/app_localizations.dart';
-import 'change_password.dart';
 
 class SettingsScreen extends StatelessWidget {
   // const SettingsScreen({Key? key}) : super(key: key);

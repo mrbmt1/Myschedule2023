@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'birthday_widget.dart';
 import 'create_birthday_taks.dart';
-import 'main.dart';
 
 //Hàm hiển thị thông báo khi bấm vào icon chuông thông báo
 showBDNotificationDialog(

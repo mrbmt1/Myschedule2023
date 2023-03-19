@@ -2,10 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
-import 'package:myshedule/create_task.dart';
-import 'package:myshedule/edit_birthday_task.dart';
+import 'package:myshedule/birthday_task/edit_birthday_task.dart';
 import 'birthdaylist.dart';
-import 'edit_task.dart';
 
 class BirthDayWidget extends StatelessWidget {
   final BirthDayItem birthdayTodo;
@@ -38,6 +36,7 @@ class BirthDayWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 10, // Độ nâng của Card
+      // color: Color.fromARGB(255, 253, 227, 245), //
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0), // Bo tròn cạnh của Card
       ),
