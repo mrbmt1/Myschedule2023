@@ -226,7 +226,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             //TrườngTài khoản
             TextFormField(
-              decoration: InputDecoration(labelText: 'Tài khoản'),
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.person),
+                  labelText: 'Tài khoản'),
               onChanged: (value) {
                 setState(() {
                   _username = value;
@@ -236,10 +239,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
             //Trường mật khẩu
+            SizedBox(height: 10),
+
             TextFormField(
               // controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.lock),
                 labelText: 'Mật khẩu',
               ),
               onChanged: (value) {
@@ -255,6 +262,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextFormField(
               // controller: _fullNameController,
               decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.person_outline_outlined),
                 labelText: 'Họ tên',
               ),
               onChanged: (value) {
@@ -266,9 +275,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               validator: _validateFullname,
               autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
+            SizedBox(height: 10),
+
             TextFormField(
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(labelText: 'Số điện thoại'),
+              decoration: InputDecoration(
+                labelText: 'Số điện thoại',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.phone),
+              ),
               onChanged: (value) {
                 setState(() {
                   _phone = value;
@@ -277,6 +292,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               validator: _validatePhone,
               autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
+            SizedBox(height: 10),
+
             Form(
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -284,7 +301,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.mail),
+                    ),
                     onChanged: (value) {
                       setState(() {
                         _email = value;
@@ -306,7 +327,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               lastDate:
                   DateTime.now(), // Ngày cuối cùng mà người dùng có thể chọn
               dateMask: 'dd/MM/yyyy', // Định dạng ngày tháng năm
-              decoration: InputDecoration(labelText: 'Ngày, tháng, năm sinh'),
+              decoration: InputDecoration(
+                labelText: 'Ngày, tháng, năm sinh',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.calendar_month_outlined),
+              ),
               onChanged: (value) {
                 setState(() {
                   _dob = value;
@@ -321,7 +346,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             SizedBox(height: 10),
             DropdownButtonFormField(
-              decoration: InputDecoration(labelText: 'Giới tính'),
+              decoration: InputDecoration(
+                labelText: 'Giới tính',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.person_pin_rounded),
+              ),
               value: _gender,
               items: ['Nam', 'Nữ', 'Khác']
                   .map((gender) => DropdownMenuItem(

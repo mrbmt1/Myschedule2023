@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myshedule/school_schedule/sat_school_schedule.dart';
@@ -12,14 +14,95 @@ class FriDayScheduleScreen extends StatefulWidget {
 }
 
 class _FriDayScheduleScreenState extends State<FriDayScheduleScreen> {
-  late List<int> _periods;
-  late List<int> _periodsNumber;
-
+  final _subject1 = TextEditingController();
+  final _subject2 = TextEditingController();
+  final _subject3 = TextEditingController();
+  final _subject4 = TextEditingController();
+  final _subject5 = TextEditingController();
+  final _subject6 = TextEditingController();
+  final _subject7 = TextEditingController();
+  final _subject8 = TextEditingController();
+  final _subject9 = TextEditingController();
+  final _subject10 = TextEditingController();
+  final _subject11 = TextEditingController();
+  final _subject12 = TextEditingController();
   @override
   void initState() {
     super.initState();
-    _periods = List.generate(15, (index) => index + 1);
-    _periodsNumber = List.generate(15, (index) => index + 1);
+    loadFridayData();
+  }
+
+  void _updateSchedule() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('schedules')
+        .doc(currentUser?.uid)
+        .get();
+    final data = snapshot.data();
+
+    Map<String, dynamic> scheduleData = {
+      'friday': {
+        'subject1': _subject1.text,
+        'subject2': _subject2.text,
+        'subject3': _subject3.text,
+        'subject4': _subject4.text,
+        'subject5': _subject5.text,
+        'subject6': _subject6.text,
+        'subject7': _subject7.text,
+        'subject8': _subject8.text,
+        'subject9': _subject9.text,
+        'subject10': _subject10.text,
+        'subject11': _subject11.text,
+        'subject12': _subject12.text,
+      },
+    };
+
+    try {
+      if (data != null) {
+        await FirebaseFirestore.instance
+            .collection('schedules')
+            .doc(currentUser?.uid)
+            .update(scheduleData);
+      } else {
+        await FirebaseFirestore.instance
+            .collection('schedules')
+            .doc(currentUser?.uid)
+            .set(scheduleData);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thời khóa biểu thứ sáu thành công!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thất bại!')),
+      );
+    }
+  }
+
+  void loadFridayData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('schedules')
+        .doc(currentUser?.uid)
+        .get();
+    final data = snapshot.data();
+
+    if (data != null && data['friday'] != null) {
+      setState(() {
+        _subject1.text = data['friday']['subject1'] ?? '';
+        _subject2.text = data['friday']['subject2'] ?? '';
+        _subject3.text = data['friday']['subject3'] ?? '';
+        _subject4.text = data['friday']['subject4'] ?? '';
+        _subject5.text = data['friday']['subject5'] ?? '';
+        _subject6.text = data['friday']['subject6'] ?? '';
+        _subject7.text = data['friday']['subject7'] ?? '';
+        _subject8.text = data['friday']['subject8'] ?? '';
+        _subject9.text = data['friday']['subject9'] ?? '';
+        _subject10.text = data['friday']['subject10'] ?? '';
+        _subject11.text = data['friday']['subject11'] ?? '';
+        _subject12.text = data['friday']['subject12'] ?? '';
+      });
+    }
   }
 
   @override
@@ -27,152 +110,372 @@ class _FriDayScheduleScreenState extends State<FriDayScheduleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Thời khóa biểu'),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Thứ sáu',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (DateFormat('EEEE').format(DateTime.now()) == 'Friday')
-                Text(
-                  ' (hôm nay)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                    fontSize: 20,
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: GestureDetector(
           child: ListView(
             children: [
-              SizedBox(height: 10),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Thứ 6',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (DateFormat('EEEE').format(DateTime.now()) == 'Friday')
+                    Text(
+                      ' (hôm nay)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                        fontSize: 20,
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: 2),
               Text(
                 'Sáng',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Row(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: 80,
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Tiết ${_periodsNumber[index]}',
-                            border: OutlineInputBorder(),
-                          ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 1',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject1,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          height: 50,
-                          child: TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Tên tiết ${_periods[index]}',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 2',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject2,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 3',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject3,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 4',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject4,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 5',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject5,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               Text(
                 'Chiều',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Row(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: 80,
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Tiết ${_periodsNumber[index] + 5}',
-                            border: OutlineInputBorder(),
-                          ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 6',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject6,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          height: 50,
-                          child: TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Tên tiết ${_periods[index + 5]}',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 7',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject7,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 8',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject8,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 9',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject9,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 10',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject10,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               Text(
                 'Tối',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: 2,
-                itemBuilder: (context, index) {
-                  return Row(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: 80,
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Tiết ${_periodsNumber[index] + 10}',
-                            border: OutlineInputBorder(),
-                          ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 11',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject11,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          height: 50,
-                          child: TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Tên tiết ${_periods[index + 10]}',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Row(
+                children: [
+                  Container(
+                    height: 50,
+                    width: 80,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                          labelText: 'Tiết 12',
+                          border: OutlineInputBorder(),
+                          enabled: false),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      child: TextFormField(
+                        controller: _subject12,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -180,12 +483,9 @@ class _FriDayScheduleScreenState extends State<FriDayScheduleScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Lưu thông tin thời khóa biểu vào cơ sở dữ liệu hoặc nơi lưu trữ tương tự ở đây
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Thông tin thời khóa biểu đã được lưu.')),
-          );
+          _updateSchedule();
         },
-        child: Icon(Icons.save),
+        child: Icon(Icons.save_as_rounded),
       ),
     );
   }
