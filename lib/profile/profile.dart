@@ -251,17 +251,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   SizedBox(height: 16.0),
                   TextFormField(
                     enabled: false,
-                    initialValue: _userData['gender'] ?? '',
-                    decoration: InputDecoration(
-                      labelText: 'Giới tính',
-                      border: OutlineInputBorder(),
-                      disabledBorder: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.people_outline_sharp),
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    enabled: false,
                     initialValue: _userData['phone'] ?? '',
                     decoration: InputDecoration(
                       labelText: 'Số điện thoại',

@@ -15,11 +15,33 @@ class SchoolScheduleNavigator extends StatefulWidget {
 
 class _SchoolScheduleNavigatorState extends State<SchoolScheduleNavigator> {
   int _currentIndex = DateTime.now().weekday - 1;
+  PageController _pageController =
+      PageController(initialPage: DateTime.now().weekday - 1);
 
   void onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
+      _pageController.animateToPage(index,
+          duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
     });
+  }
+
+  void onPageChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (details.primaryVelocity! > 0) {
+      // Quẹt sang phải
+      _pageController.previousPage(
+          duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
+    } else if (details.primaryVelocity! < 0) {
+      // Quẹt sang trái
+      _pageController.nextPage(
+          duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
+    }
   }
 
   final List<Widget> _children = [
@@ -32,26 +54,17 @@ class _SchoolScheduleNavigatorState extends State<SchoolScheduleNavigator> {
     SunDayScheduleScreen(),
   ];
 
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    if (details.primaryVelocity! > 0) {
-      // Quẹt sang phải
-      setState(() {
-        _currentIndex = (_currentIndex - 1) % 7;
-      });
-    } else if (details.primaryVelocity! < 0) {
-      // Quẹt sang trái
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % 7;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GestureDetector(
         onHorizontalDragEnd: _onHorizontalDragEnd,
-        child: _children[_currentIndex],
+        child: PageView(
+          controller: _pageController,
+          children: _children,
+          onPageChanged: onPageChanged,
+          physics: BouncingScrollPhysics(),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.grey,

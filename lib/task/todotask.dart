@@ -276,7 +276,7 @@ class TodoListScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.list_sharp),
+              leading: Icon(Icons.list_alt),
               title: Text('Thời khóa biểu'),
               onTap: () {
                 Navigator.push(
