@@ -4,6 +4,8 @@
         android:label="myshedule"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        android:name="io.flutter.app.FlutterApplication"
+        android:requestLegacyExternalStorage="true"      
         <activity
             android:name=".MainActivity"
             android:exported="true"

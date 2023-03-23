@@ -259,6 +259,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       suffixIcon: Icon(Icons.phone),
                     ),
                   ),
+                  SizedBox(height: 16.0),
+                  TextFormField(
+                    enabled: false,
+                    initialValue: _userData['email'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.mail),
+                    ),
+                  ),
                   SizedBox(height: 50.0),
                 ],
               ),

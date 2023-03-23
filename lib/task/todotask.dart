@@ -24,6 +24,8 @@ import 'package:unorm_dart/unorm_dart.dart';
 import 'task_widget.dart';
 import 'package:timezone/data/latest.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/src/platform_specifics/android/enums.dart';
 
 //log out function
 void logout(BuildContext context) async {
@@ -232,6 +234,7 @@ class TodoListScreen extends StatelessWidget {
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: 'default',
+      // androidPendingIntentFlags: PendingIntent.FLAG_IMMUTABLE,
     );
   }
 

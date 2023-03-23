@@ -45,8 +45,8 @@ class BirthDayWidget extends StatelessWidget {
         padding: EdgeInsets.only(
             top: 15,
             bottom: 22,
-            right: 20,
-            left: 40), //4 phía của card với content
+            right: 25,
+            left: 50), //4 phía của card với content
         child: Row(
           children: [
             Expanded(
